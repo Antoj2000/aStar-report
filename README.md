@@ -1,1 +1,3 @@
-# aStar-report
+# aStar Report
+
+## Introduction
