@@ -26,7 +26,7 @@ int main() {
 }
 ```
 
-Breaking no new ground here sure, but this helped me visualise the overall process. And also that strings would not be a viable solution!
+Breaking no new ground here sure, but this helped me visualise the overall process. And also realise that strings would not be a viable solution!
 
 My next immediate thought was directions. How would the computer know which way was up and down, left and right? If point is (0,0) on a graph, then one space right is (0,1). Left is (-1,0). But picturing this on a graph was a mistake as I found out soon enough. Following on my current logic, down would be (-1,0) and up would be (1,0). When I printed the co-ords of each position in my grid up and down were reversed. This is because in programming grids, row increases downward, and column to the right. So a down from point (1,1) on a grid would be (2,1). This was the first lesson of many during this project.
 
@@ -78,9 +78,9 @@ Range-based for loops are preferred over index-based loops when iterating over a
 
 The main role of the Grid class is to separate map storage from pathfinding logic. The grid is responsible for answering environmental questions such as
 
-	• Is the coordinate inside the map?
-	• Is a tile walkable?
-	• What symbol should be stored in a cell?
+- Is the coordinate inside the map?
+- Is a tile walkable?
+- What symbol should be stored in a cell?
 
 I defined these core questions my grid class needed to answer, and built those functions first. This gave me a stable foundation to work from. Path printing was added later, but the essential structure was already in place. 
 
@@ -147,7 +147,52 @@ bool Grid::InBounds(int r, int c) const {
 ```
 The reason for this is because `map.size()` returns an unsigned value, which can cause awkward comparisons when checking negative indices, whereas `std:ssize` returns a signed value and makes bound checking safer and more consistent.
 
-## Grid Tests
+#### Grid Tests
+
+## Separating Concerns
+
+Another important decision was made at this point which paralysed my progress for awhile. I needed to determine the overall architecture of the entire project. I knew that I would have an AStar class and a Node class but what should I put in which? 
+
+Similar to the questions I asked myself at the start of the grid class I defined roles for each class.
+
+- Grid is the environment
+- Node is the search state
+- AStar is the algorithm
+
+The Grid class only stores map data and handles environment-related operations such as bounds, walkability, and printing. The Node struct stores the state of a visited or unvisited position in the search, including costs and parent information. The AStar class is responsible for movement rules, heuristic calculation, open and closed set handling, and path reconstruction.
+
+This confusion came about whilst trying to assign the movement directions to a class. My final decision was that because directions would be an algorithm behavior, they belong to AStar.
+
+## Node
+
+The node struct represents an individual search state. It stores
+- row and col 
+- gCost, the known cost from the start 
+- hCost, the heuristic estimate to the goal 
+- parentRow and parentCol, which store where the node came from
+
+```cpp
+struct Node {
+    int row{};
+    int col{};
+
+    int gCost{};
+    int hCost{};
+
+    int parentRow{ -1 };
+    int parentCol{ -1 };
+
+    Node() = default;
+    Node(int row, int col, int gCost, int hCost, int parentRow = -1, int parentCol = -1);
+
+    [[nodiscard]] int FCost() const {
+        return gCost + hCost;
+    }
+};
+```
+
+
+
 
 
 
