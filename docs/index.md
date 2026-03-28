@@ -701,7 +701,7 @@ std::vector<Node> AStar::ReconstructPath(
 ```
 I gave that a quick test to make sure it returned the correct result. 
 
-![Reconstruct Path Image](/ReconstructPathTest.png)
+![Reconstruct Path Image](images/ReconstructPathTest.png)
 
 With that done I was now ready to create different test cases for my AStar class.
 
