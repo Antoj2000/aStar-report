@@ -668,12 +668,44 @@ std::vector<Node> AStar::FindPath(
 ```
 
 ## Reconstruct Path
+I now needed a way to return the path the algorithm took on its way to the goal. Before I began, like usual I defined the behavior of this method so I could fully understand what it needed to do
 
+`ReconstructPath` will 
 
+- Start at the goal node
+- Look up the node that led to it
+- Repeat all the way to the start node
+- Reverse the list so it becomes start -> goal
 
+```cpp
+std::vector<Node> AStar::ReconstructPath(
+    const std::vector<std::vector<Node>>& travelMap,
+    const Node& goalNode,
+    int startRow,
+    int startCol
+) const {
+    std::vector<Node> path;
+    Node current = goalNode;
 
+    while (!(current.row == startRow && current.col == startCol)) {
+        path.push_back(current);
+        current = travelMap[current.row][current.col];
+    }
 
+    path.push_back(current);
 
+    std::ranges::reverse(path);
+
+    return path;
+}
+```
+I gave that a quick test to make sure it returned the correct result. 
+
+![Reconstruct Path Image](images/ReconstructPathTest.png)
+
+With that done I was now ready to create different test cases for my AStar class.
+
+## AStar Tests
 
 
 
