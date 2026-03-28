@@ -191,6 +191,82 @@ struct Node {
 };
 ```
 
+Here the choice to use a struct rather than a fully fleged class was made because Node is essentially a compact data carrier. The only behavior it includes is FCost(), which returns the sum of the path cost so far and the heuristic estimate.
+
+This is the main value used to prioritise nodes in A*.
+
+Initially Node was a bare struct, and was being constructed like this. 
+
+```cpp
+Node startNode;
+startNode.row = startRow;
+startNode.col = startCol;
+startNode.gCost = 0;
+startNode.hCost = Heuristic(startRow, startCol, goalRow, goalCol);
+startNode.parentRow = -1;
+startNode.parentCol = -1;
+```
+This way of constructing was also being use to create the neighbor nodes, when expanding neighbors. As you can see it's not too pretty and very repetitive. So I asked ChatGPT how I could reduce repetition when constructing these nodes. It first suggested adding helper functions within AStar
+```cpp
+Node AStar::CreateStartNode(
+    int startRow,
+    int startCol,
+    int goalRow,
+    int goalCol
+) const {
+    return Node{
+        startRow,
+        startCol,
+        0,
+        Heuristic(startRow, startCol, goalRow, goalCol),
+        -1,
+        -1
+    };
+}
+
+Node AStar::CreateNeighbourNode(
+    int neighbourRow,
+    int neighbourCol,
+    int proposedGCost,
+    int goalRow,
+    int goalCol,
+    const Node& current
+) const {
+    return Node{
+        neighbourRow,
+        neighbourCol,
+        proposedGCost,
+        Heuristic(neighbourRow, neighbourCol, goalRow, goalCol),
+        current.row,
+        current.col
+    };
+}
+```
+But this was not ideal, the whole point was to reduce the clutter in AStar. So I suggested moving Node construction into its own cpp class, which made the most sense. Up to this point Node had no cpp and was only a header file containing the struct. So I added the default and parameterized constructor:
+```cpp
+Node() = default;
+Node(int row, int col, int gCost, int hCost, int parentRow = -1, int parentCol = -1);
+```
+A default constructor is needed as when I create a vector of Nodes `std::vector<Node>`, which you will see in my AStar class, requires it when allocating and resizing internal storage. Basically I need a blank node before I start filling in values.
+
+And then in Node.cpp I added the intialiser method
+```cpp
+Node::Node(int row, int col, int gCost, int hCost, int parentRow, int parentCol)
+    : row(row), col(col), 
+      gCost(gCost), hCost(hCost), 
+      parentRow(parentRow), parentCol(parentCol)
+{}
+```
+This method does not include the parentRow and parentCols as this will be the same for every Node. And we can use:
+```cpp
+Node startNode(startRow, startCol, 0, Heuristic(startRow, startCol, goalRow, goalCol));
+```
+To construct the nodes each time now. A significant reduction in clutter and improvement in readability as nodes can be created in a single line rather than being declared and populated field by field.
+
+## AStar
+
+
+
 
 
 
