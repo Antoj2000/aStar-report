@@ -316,29 +316,35 @@ A heuristic is an estimate of how close a given state is to a goal, in this case
 
 #### Manhattan
 
-Manhattan heuristic is the sum of the horizontal and vertical distances between two points, start and goal. A nice way to visualise it is thinking of city blocks in America, hence "Manhattan".
-The Manhattan distance between two points $(x_1, y_1)$ and $(x_2, y_2)$ is defined as:
+### Manhattan
 
-$$d = |x_1 - x_2| + |y_1 - y_2|$$
+The Manhattan heuristic is the sum of the horizontal and vertical distances between two points: the start and the goal. A useful way to visualise it is by thinking of movement through city blocks, which is where the name *Manhattan* comes from.
 
-This generalises to $n$ dimensions as:
+The Manhattan distance between two points `(x1, y1)` and `(x2, y2)` is:
 
-$$d = \sum_{i=1}^{n} |p_i - q_i|$$
+`d = |x1 - x2| + |y1 - y2|`
 
-This would be suitable for 4-directional movement
+This generalises to *n* dimensions as:
 
-#### Euclidean
+`d = Σ |pi - qi|`
 
-The Euclidean heuristic is the straight-line distance between two points, start and goal.
-The Euclidean distance between two points $(x_1, y_1)$ and $(x_2, y_2)$ is defined as:
+This heuristic is best suited to **4-directional movement**, where movement is only allowed up, down, left, and right.
 
-$$d = \sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2}$$
+---
 
-This generalises to $n$ dimensions as:
+### Euclidean
 
-$$d = \sqrt{\sum_{i=1}^{n} (p_i - q_i)^2}$$
+The Euclidean heuristic is the straight-line distance between two points: the start and the goal.
 
-This would be suitable for 8-directional or free movement.
+The Euclidean distance between two points `(x1, y1)` and `(x2, y2)` is:
+
+`d = √((x1 - x2)^2 + (y1 - y2)^2)`
+
+This generalises to *n* dimensions as:
+
+`d = √(Σ (pi - qi)^2)`
+
+This heuristic is better suited to **8-directional** or **free movement**, where diagonal movement is allowed.
 
 ### Heuristic Choice 
 
@@ -352,6 +358,98 @@ int AStar::Heuristic(int row, int col, int goalRow, int goalCol) const {
 }
 ```
 Here we used the given co-ordinates along with the goal co-ordinates to calculate the hCost of the Node. We use `std::abs` to ensure the return is never negative.
+
+## Find Path Setup
+
+AStar works around the idea, from all discovered nodes, choose the path with the lowest estimated cost. That means lowest gCost + hCost (gCost being the cost so far from the start node). Together they balance exploration (g) and goal direction (h).
+
+Before we can expand neighbours, I needed a way to select the best node currently in the open list. My psuedo code before I started went like this.
+```cpp
+FUNCTION FindPath(grid, startRow, startCol, goalRow, goalCol):
+
+    IF start or goal is not walkable THEN
+        RETURN empty path
+    END IF
+
+    Initialise openList as a min-priority queue ordered by f cost
+    Initialise closedList, bestGCost, travelMap tables
+
+    Create startNode with gCost = 0, hCost = Heuristic(start, goal)
+    Push startNode onto openList
+    Set bestGCost[start] = 0
+
+    WHILE openList is not empty DO
+
+        current = node with lowest f cost from openList
+
+        IF current has already been visited THEN
+            SKIP
+        END IF
+
+        Mark current as visited in closedList
+
+        IF current is the goal THEN
+            RETURN ReconstructPath(travelMap, current, start)
+        END IF
+
+		ExpandNeighbors...
+        
+    END WHILE
+
+END FUNCTION
+```
+So I started off with a check to see if the start and goal positions are walkable before starting the algorithm. 
+
+```cpp
+if (!grid.IsWalkable(startRow, startCol) || !grid.IsWalkable(goalRow, goalCol)) {
+    return {};
+}
+```
+Then I created a vector of nodes called OpenList and defined the startNode
+```cpp
+std::vector<Node> openList;
+
+Node startNode;
+startNode.row = startRow;
+startNode.col = startCol;
+startNode.gCost = 0;
+startNode.hCost = Heuristic(startRow, startCol, goalRow, goalCol);
+startNode.parentRow = -1;
+startNode.parentCol = -1;
+```
+Later this was changed to a `priority_queue` in place of a vector.
+
+With a vector, every loop would scan the whole list and find the lowest fCost manually. With a `priority_queue` we always get the highest-priority item straight away.
+```cpp
+Std::priority_queue<Node, std::vector<Node>, Comparator> openList
+```
+A priority queue is a container adaptor that provides constant time look up of the largest (or highest priority) element. A comparator can be provided to change the ordering, in our case we want the smallest fCost. [Priority Queue](https://en.cppreference.com/w/cpp/container/priority_queue.html) 
+
+So I needed to create a small struct that would let me tell the queue how to rank the nodes. 
+```cpp
+struct CompareNodes {
+    bool operator()(const Node& a, const Node& b) const {
+        return a.FCost() > b.FCost();
+    }
+};
+```
+This makes the lower fCost come out first. Because it is a max-heap by default, the comparison looks backwards at first.
+```cpp
+return a.FCost() > b.FCost();
+```
+Means a node with a smaller fCost gets priority.
+
+So inside `FindPath()` to create a priority queue we use `std::priority_queue<Node, std::vector<Node>, CompareNodes> openList;` coupled with the improvement to our node construction:
+```cpp
+ std::priority_queue<Node, std::vector<Node>, CompareNodes> openList;
+ Node startNode(startRow, startCol, 0, Heuristic(startRow, startCol, goalRow, goalCol));
+ openList.push(startNode);
+```
+With this block we create the queue, construct the starting node, and then insert it into the queue so the algorithm can begin processing it.
+
+Before we continue with the main loop of `FindPath`, we will take a look at `ExpandNeighbours`
+
+## Expand Neighbours
 
 
 
