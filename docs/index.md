@@ -44,9 +44,9 @@ int directions[4][2] = {
 ```
 Then from here, when I had a good idea of the fundamentals of the grid and how these simple concepts would work, I moved onto an object-oriented structure, and finally a working A* search with closed lists, cost tracking, path reconstruction and tests. This workflow of building A* as smaller concepts that were understood one at a time suited me perfectly.
 
-## Core Concepts
+# Core Concepts
 
-### Grid
+## Grid
 
 The first component I completed was the Grid class, which I had coded in main first, as stated in the introduction. Before I could even begin to think about algorithms and pathfinding, I needed a way to represent free cells, blocked cells, and map dimensions. This made grid the natural starting point of the project.
 
@@ -149,7 +149,7 @@ bool Grid::InBounds(int r, int c) const {
 ```
 The reason for this is because `map.size()` returns an unsigned value, which can cause awkward comparisons when checking negative indices, whereas `std:ssize` returns a signed value and makes bound checking safer and more consistent.
 
-#### Grid Tests
+### Grid Tests
 
 ## Separating Concerns
 
@@ -208,7 +208,7 @@ startNode.hCost = Heuristic(startRow, startCol, goalRow, goalCol);
 startNode.parentRow = -1;
 startNode.parentCol = -1;
 ```
-This way of constructing was also being use to create the neighbor nodes, when expanding neighbors. As you can see it's not too pretty and very repetitive. So I asked ChatGPT how I could reduce repetition when constructing these nodes. It first suggested adding helper functions within AStar
+This way of constructing was also being use to create the neighbor nodes, when expanding neighbours. As you can see it's not too pretty and very repetitive. So I asked ChatGPT how I could reduce repetition when constructing these nodes. It first suggested adding helper functions within AStar
 ```cpp
 Node AStar::CreateStartNode(
     int startRow,
@@ -274,7 +274,7 @@ The AStar class is where the main algorithm is implemented. First I defined what
 It needs to: 
 - Take a grid
 - Take a start and goal position
-- Explore valid neighbors
+- Explore valid neighbours
 - Use a heuristic to guide the search
 - Return a final path
 
@@ -283,7 +283,7 @@ So my initial methods were
 - FindPath
 - ExpandNeighbours
 
-I also defined my neighbors here
+I also defined my neighbours here
 
 ```cpp
 namespace {
@@ -310,11 +310,9 @@ This means
 
 So this approach is basically zero-cost at runtime whilst also being safer.
 
-### Heuristic
+## Heuristic
 
 A heuristic is an estimate of how close a given state is to a goal, in this case it will be used to guide AStar. I have two options here.
-
-#### Manhattan
 
 ### Manhattan
 
@@ -391,7 +389,7 @@ FUNCTION FindPath(grid, startRow, startCol, goalRow, goalCol):
             RETURN ReconstructPath(travelMap, current, start)
         END IF
 
-		ExpandNeighbors...
+		Expandneighbours...
         
     END WHILE
 
@@ -478,7 +476,7 @@ for (const auto& [rowOffset, colOffset] : Directions) {
 	    continue;
 	}
 ```
-Here we use another range based for loop to cycle through each direction, and set the neighbors row and column. Then we make sure it's walkable, not already visited and if we already found an equal or better path to the Node.[^1]
+Here we use another range based for loop to cycle through each direction, and set the neighbours row and column. Then we make sure it's walkable, not already visited and if we already found an equal or better path to the Node.[^1]
 
 [^1]: In this section I will refer to tables that I created: gCost, closedList, and travelMap. I will explain these in the next section of the report.
 
@@ -603,6 +601,73 @@ std::vector<Node> AStar::FindPath(
 ```
 
 ## Find Path While Loop
+
+With `Expand Neighbours` completed our while loop becomes simple. This loop repeatedly pulls the best node from the priority queue, skips it if already visited, checks for the goal, and otherwise expands its neighbours to continue the A* search.
+
+```cpp
+while (!openList.empty()) {
+    Node current = openList.top();
+    openList.pop();
+
+    if (tables.closedList[current.row][current.col]) {
+        continue;
+    }
+    tables.closedList[current.row][current.col] = true;
+
+    // Win condition check
+    if (current.row == goalRow && current.col == goalCol) {
+        return ReconstructPath(tables.travelMap, current, startRow, startCol);
+    }
+
+    ExpandNeighbours(grid, current, goalRow, goalCol, openList, tables.closedList, tables.bestGCost, tables.travelMap);
+}
+```
+Because of the design decisions, this code becomes easily readable and it is simple to understand the flow of the algorithm.
+Below is the full FindPath method.
+
+```cpp
+std::vector<Node> AStar::FindPath(
+    const Grid& grid,
+    int startRow, int startCol,
+	int goalRow, int goalCol
+) const {
+    if (!grid.IsWalkable(startRow, startCol) || !grid.IsWalkable(goalRow, goalCol)) {
+        return {};
+    }
+
+    std::priority_queue<Node, std::vector<Node>, CompareNodes> openList;
+    
+    AStarTables tables = InitTables(grid);
+
+    Node startNode(startRow, startCol, 0, Heuristic(startRow, startCol, goalRow, goalCol));
+
+    openList.push(startNode);
+    tables.bestGCost[startRow][startCol] = 0;
+    
+	// Main loop of the A* algorithm, continues until there are no more nodes to explore in the open list
+    while (!openList.empty()) {
+        Node current = openList.top();
+        openList.pop();
+
+		// Skip if the node has already been visited
+        if (tables.closedList[current.row][current.col]) {
+            continue;
+        }
+        tables.closedList[current.row][current.col] = true;
+
+        // Win condition check
+        if (current.row == goalRow && current.col == goalCol) {
+            return ReconstructPath(tables.travelMap, current, startRow, startCol);
+        }
+
+        ExpandNeighbours(grid, current, goalRow, goalCol, openList, tables.closedList, tables.bestGCost, tables.travelMap);
+    }
+
+    return {};
+}
+```
+
+## Reconstruct Path
 
 
 
