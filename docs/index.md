@@ -28,7 +28,9 @@ int main() {
 
 Breaking no new ground here sure, but this helped me visualise the overall process. And also realise that strings would not be a viable solution!
 
-My next immediate thought was directions. How would the computer know which way was up and down, left and right? If point is (0,0) on a graph, then one space right is (0,1). Left is (-1,0). But picturing this on a graph was a mistake as I found out soon enough. Following on my current logic, down would be (-1,0) and up would be (1,0). When I printed the co-ords of each position in my grid up and down were reversed. This is because in programming grids, row increases downward, and column to the right. So a down from point (1,1) on a grid would be (2,1). This was the first lesson of many during this project.
+My next immediate thought was directions. How would the computer know which way was up and down, left and right? If point is (0,0) on a graph, then one space right is (0,1). Left is (-1,0). But picturing this on a graph was a mistake as I found out soon enough. 
+
+Following on my current logic, down would be (-1,0) and up would be (1,0). When I printed the co-ords of each position in my grid up and down were reversed. This is because in programming grids, row increases downward, and column to the right. So a down from point (1,1) on a grid would be (2,1). This was the first lesson of many during this project.
 
 Now that I had this logic sorted out I created my first directions 2D array.
 
@@ -264,6 +266,94 @@ Node startNode(startRow, startCol, 0, Heuristic(startRow, startCol, goalRow, goa
 To construct the nodes each time now. A significant reduction in clutter and improvement in readability as nodes can be created in a single line rather than being declared and populated field by field.
 
 ## AStar
+
+Now that I had a data structure, and a way to print my grid, it was time to start working on the AStar class.
+
+The AStar class is where the main algorithm is implemented. First I defined what responsibilities AStar has.
+
+It needs to: 
+- Take a grid
+- Take a start and goal position
+- Explore valid neighbors
+- Use a heuristic to guide the search
+- Return a final path
+
+So my initial methods were
+- Heuristic
+- FindPath
+- ExpandNeighbours
+
+I also defined my neighbors here
+
+```cpp
+namespace {
+    constexpr std::array<std::pair<int, int>, 4> Directions{
+        std::pair{-1, 0},  // up
+        std::pair{1, 0},   // down
+        std::pair{0, -1},  // left
+        std::pair{0, 1}    // right
+    };
+}
+```
+A few changes here to note from my original directions array. As I coded I constantly asked ChatGPT if any improvements could be made, or if my code could be made safer.
+
+We use `namespace` giving directions internal linkage, so it is invisible outside this cpp file. This is the modern alternative to static. Since Directions is an implementation detail of the A* algorithm, nothing outside this file should know it exists.
+
+`constexpr` tells the compiler that Directions is a compile-time constant, so the value is known before the program runs. 
+
+This means
+- Zero runtime cost to initialise it
+- The compiler can optimize loops over it aggressively
+- Enforces nobody accidentally mutates it at runtime.
+
+`std::pair<int, int>` is used because each direction is naturally a pair of two related integers `(rowOffset, colOffset)`. `std::pair` is a lightweight, standard way to group them without defining a whole struct. It also enables a clean structured binding in the loop `for (const auto& [rowOffset, colOffset] : Directions)` which is used in ExpandNeighbours.
+
+So this approach is basically zero-cost at runtime whilst also being safer.
+
+### Heuristic
+
+A heuristic is an estimate of how close a given state is to a goal, in this case it will be used to guide AStar. I have two options here.
+
+#### Manhattan
+
+Manhattan heuristic is the sum of the horizontal and vertical distances between two points, start and goal. A nice way to visualise it is thinking of city blocks in America, hence "Manhattan".
+The Manhattan distance between two points $(x_1, y_1)$ and $(x_2, y_2)$ is defined as:
+
+$$d = |x_1 - x_2| + |y_1 - y_2|$$
+
+This generalises to $n$ dimensions as:
+
+$$d = \sum_{i=1}^{n} |p_i - q_i|$$
+
+This would be suitable for 4-directional movement
+
+#### Euclidean
+
+The Euclidean heuristic is the straight-line distance between two points, start and goal.
+The Euclidean distance between two points $(x_1, y_1)$ and $(x_2, y_2)$ is defined as:
+
+$$d = \sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2}$$
+
+This generalises to $n$ dimensions as:
+
+$$d = \sqrt{\sum_{i=1}^{n} (p_i - q_i)^2}$$
+
+This would be suitable for 8-directional or free movement.
+
+### Heuristic Choice 
+
+For my project the realistic choice was manhattan as I planned on using 4 directional movement, but if I wanted to expand to 8-directional or diagonal, I would just add 4 co-ordinate sets to my to my directional array, and replace the manhattan calculation with the euclidean.
+
+So now my choice was made I defined my method. 
+
+```cpp
+int AStar::Heuristic(int row, int col, int goalRow, int goalCol) const {
+    return std::abs(row - goalRow) + std::abs(col - goalCol);
+}
+```
+Here we used the given co-ordinates along with the goal co-ordinates to calculate the hCost of the Node. We use `std::abs` to ensure the return is never negative.
+
+
 
 
 
