@@ -478,7 +478,8 @@ for (const auto& [rowOffset, colOffset] : Directions) {
 	    continue;
 	}
 ```
-Here we use another range based for loop to cycle through each direction, and set the neighbors row and column. Then we make sure it's walkable, not already visited and if we already found an equal or better path to the Node.[^1]
+Here we use another range based for loop to cycle through each direction, and set the neighbors row and column. Then we make sure it's walkable, not already visited and if we already found an equal or better path to the Node. [^1]
+
 {^1]: In this section I will refer to tables that I created: gCost, closedList, and travelMap. I will explain these in the next section of the report.
 
 If the node has a better gCost we will push it to the openList and update both the bestGCost and travelMap tables.
