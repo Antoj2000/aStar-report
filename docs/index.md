@@ -372,7 +372,6 @@ FUNCTION FindPath(grid, startRow, startCol, goalRow, goalCol):
     END IF
 
     Initialise openList as a min-priority queue ordered by f cost
-    Initialise closedList, bestGCost, travelMap tables
 
     Create startNode with gCost = 0, hCost = Heuristic(start, goal)
     Push startNode onto openList
@@ -421,7 +420,7 @@ Later this was changed to a `priority_queue` in place of a vector.
 
 With a vector, every loop would scan the whole list and find the lowest fCost manually. With a `priority_queue` we always get the highest-priority item straight away.
 ```cpp
-Std::priority_queue<Node, std::vector<Node>, Comparator> openList
+std::priority_queue<Node, std::vector<Node>, Comparator> openList
 ```
 A priority queue is a container adaptor that provides constant time look up of the largest (or highest priority) element. A comparator can be provided to change the ordering, in our case we want the smallest fCost. [Priority Queue](https://en.cppreference.com/w/cpp/container/priority_queue.html) 
 
@@ -450,6 +449,163 @@ With this block we create the queue, construct the starting node, and then inser
 Before we continue with the main loop of `FindPath`, we will take a look at `ExpandNeighbours`
 
 ## Expand Neighbours
+
+For each node we pop from the open list we want to:
+- Try all 4 directions
+- Calculate each neighbor position
+- Skip it if it's blocked or outside the grid
+- Create a neighbor node
+- Set its costs and parent
+- Push it into the openList
+
+```cpp
+for (const auto& [rowOffset, colOffset] : Directions) {
+
+    int neighbourRow = current.row + rowOffset;
+    int neighbourCol = current.col + colOffset;
+
+    if (!grid.IsWalkable(neighbourRow, neighbourCol)) {
+        continue;
+    }
+
+	if (closedList[neighbourRow][neighbourCol]) {
+    continue;
+	}
+
+	int proposedGCost = current.gCost + 1;
+	
+	if (proposedGCost >= bestGCost[neighbourRow][neighbourCol]) {
+	    continue;
+	}
+```
+Here we use another range based for loop to cycle through each direction, and set the neighbors row and column. Then we make sure it's walkable, not already visited and if we already found an equal or better path to the Node.[^1]
+{1^]: In this section I will refer to tables that I created: gCost, closedList, and travelMap. I will explain these in the next section of the report.
+
+If the node has a better gCost we will push it to the openList and update both the bestGCost and travelMap tables.
+
+Here is the full ÈxpandNeighbour method.
+
+```cpp
+void AStar::ExpandNeighbours(
+    const Grid& grid,
+    const Node& current,
+    int goalRow,
+    int goalCol,
+    std::priority_queue<Node, std::vector<Node>, CompareNodes>& openList,
+    const std::vector<std::vector<bool>>& closedList,
+    std::vector<std::vector<int>>& bestGCost,
+    std::vector<std::vector<Node>>& travelMap
+) const {
+    for (const auto& [rowOffset, colOffset] : Directions) {
+
+        int neighbourRow = current.row + rowOffset;
+        int neighbourCol = current.col + colOffset;
+
+        if (!grid.IsWalkable(neighbourRow, neighbourCol)) {
+            continue;
+        }
+
+        if (closedList[neighbourRow][neighbourCol]) {
+            continue;
+        }
+
+        int proposedGCost = current.gCost + 1;
+        if (proposedGCost >= bestGCost[neighbourRow][neighbourCol]) {
+            continue;
+        }
+
+		bestGCost[neighbourRow][neighbourCol] = proposedGCost;
+        travelMap[neighbourRow][neighbourCol] = current;
+
+        openList.push(Node{
+            neighbourRow, neighbourCol,
+            proposedGCost,
+            Heuristic(neighbourRow, neighbourCol, goalRow, goalCol),
+            current.row, current.col
+        });
+    }
+}
+```
+
+## Creating Tables
+
+Tables or more accurately, 2d vectors are used throughout my AStar class to keep track of gCost, a closed list and a travel map, that each track different information relating to the grid. 
+
+I was creating these tables manually and the code was beginning to look repetitive.
+```cpp
+std::vector<std::vector<bool>> closedList(
+        grid.Rows(),
+        std::vector<bool>(grid.Cols(), false)
+    );
+
+    std::vector<std::vector<int>> bestGCost(
+        grid.Rows(),
+        std::vector<int>(grid.Cols(), 99999)
+    );
+
+    std::vector<std::vector<Node>> travelMap(
+        grid.Rows(),
+        std::vector<Node>(grid.Cols())
+    );
+```
+So I asked ChatGPT if there was a more efficient way of intialising these tables. It suggested extracting the tables into its own function.
+```cpp
+struct AStarTables {
+    std::vector<std::vector<bool>> closedList;
+    std::vector<std::vector<int>> bestGCost;
+    std::vector<std::vector<Node>> travelMap;
+};
+```
+It gave me this struct to put in my AStar header file. This allowed me to then create a method to initialise these tables in the AStar cpp file.
+```cpp
+AStar::AStarTables AStar::InitTables(const Grid& grid) const {
+    return {
+        std::vector<std::vector<bool>>(
+            grid.Rows(), 
+            std::vector<bool>(grid.Cols(), false)
+        ),
+        std::vector<std::vector<int>>(
+            grid.Rows(),
+            std::vector<int>(grid.Cols(), 99999)
+        ),
+        std::vector<std::vector<Node>>(
+            grid.Rows(), 
+            std::vector<Node>(grid.Cols()))
+    };
+}
+```
+And call this method inside FindPath, before the algorithm starts its while loop
+```cpp
+std::vector<Node> AStar::FindPath(
+    const Grid& grid,
+    int startRow, int startCol,
+	int goalRow, int goalCol
+) const {
+    if (!grid.IsWalkable(startRow, startCol) || !grid.IsWalkable(goalRow, goalCol)) {
+        return {};
+    }
+
+    std::priority_queue<Node, std::vector<Node>, CompareNodes> openList;
+    
+    AStarTables tables = InitTables(grid);
+
+    Node startNode(startRow, startCol, 0, Heuristic(startRow, startCol, goalRow, goalCol));
+
+    openList.push(startNode);
+    tables.bestGCost[startRow][startCol] = 0;
+    
+	// Main loop of the A* algorithm, continues until there are no more nodes to explore in the open list
+    while (!openList.empty()) {...
+
+        ExpandNeighbours(grid, current, goalRow, goalCol, openList, tables.closedList, tables.bestGCost, tables.travelMap);
+	}
+```
+
+## Find Path While Loop
+
+
+
+
 
 
 
