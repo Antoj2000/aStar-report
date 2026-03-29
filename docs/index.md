@@ -773,7 +773,7 @@ I then asked AI to generate some exciting tests to truly showcase the algorithm 
 
 ## Project Planning
 
-As mentioned throughout the report, I kept a weekly diary to track progress and note what the next step would be after each development session. This suited the project well because the implementation was built incrementally instead of all at once. The diary helped me break the work into smaller stages, such as grid creation, class design, heuristic selection, path reconstruction, and testing. It also provided a useful record of how the project developed over time and supported the continuous development aspect required by the brief.
+As mentioned throughout the report, I kept a weekly diary to track progress and note what the next step would be after each development session. This suited the project well because the implementation was built incrementally instead of all at once. The diary helped me break the work into smaller stages, such as grid creation, class design, heuristic selection, path reconstruction, and testing.
 
 Although this section is shorter than requested, I hope the progress through is each feature is represented clearly section.
 
