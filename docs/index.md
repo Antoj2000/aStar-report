@@ -756,9 +756,31 @@ Initially I had simple tests checking basic routes and an impossible route
 
 ![Blocked Path Image](images/BlockedPathTest.png)
 
+#### AI Tests
+
+I then asked AI to generate some exciting tests to truly showcase the algorithm in effect
+
+![Maze Path Image](images/MazePathTest.png)
+
+![Fortress Path Image](images/FortressPathTest.png)
+
 ## Project Planning
 
+As mentioned throughout, I kept a weekly diary detailing my thoughts and what work I got done. At the end of every session I would write what I got done and where to pick up when I came back to it. This suited the style of the project well as it was done bit by bit. The diary helped show that progression clearly and also made it easier to reflect on design decisions when writing my report.
+
+Although this section is shorter than requested, I hope the progress through is each feature is represented clearly section.
+
 ## Limitations and Possible Improvements
+
+Although the final implementation works well for a standard grid-based A* search, it is still a relatively simple version of the algorithm. During the project I also researched more advanced pathfinding ideas, including hierarchical A* and clearance-based pathfinding for different sized agents. These approaches would make the project more capable and more realistic in larger or more complex environments. Hierarchical A* can improve efficiency by planning at different levels of abstraction, while clearance-based pathfinding allows the same map to support agents of different sizes rather than assuming every agent occupies a single grid cell. Because of time constraints, these ideas were not implemented in the final version. If I had more time, the next step would be to extend the project in one of these directions so that it moved beyond a basic single-agent, single-grid-cell A* implementation.
+
+## Reflection 
+
+The biggest problems I had during this project were mostly at the earlier stages, when I was still trying to fully understand how the grid and movement system should work. I dealt with this by taking the project one step at a time, starting with a basic printed grid and only moving on once I understood each smaller concept. Keeping a weekly diary helped a lot with this, because it let me track progress and see how the project was gradually improving week by week.
+
+Another major challenge was deciding how to organise the project properly. I was unsure at first what should belong in the Grid class, the Node struct, and the AStar class. Once I clearly separated those responsibilities, the project became much easier to manage. 
+
+Overall, I think the step-by-step development approach worked well for me. It helped me understand the logic behind A* rather than just aiming for a finished result. I also learned a lot more about modern C++ and writing code in a more modular way. If I were to do the project again, I would try to leave more time for advanced features such as hierarchical A* or clearance-based pathfinding, as these were areas I researched but did not get to implement in the final version.
 
 ## AI Use
 AI assistance was used in a limited and reflective way, mainly to:
