@@ -1,3 +1,10 @@
+<div align="center">
+  <h1>A Star Algorithm</h1>
+  <p><strong>Anthony Johnson</strong></p>
+  <p>G00385306</p>
+  <p><em>C++, Year 4, Atlantic Technological University</em></p>
+</div>
+
 ## Introduction
 
 The goal of this project was to build a modern C++ application capable of solving a pathfinding problem using the A* algorithm. In simple terms, the aim was to determine whether a computer could find the shortest path from point A to point B (or from S to G on a grid) while avoiding blocked cells.
@@ -766,13 +773,25 @@ I then asked AI to generate some exciting tests to truly showcase the algorithm 
 
 ## Project Planning
 
-As mentioned throughout, I kept a weekly diary detailing my thoughts and what work I got done. At the end of every session I would write what I got done and where to pick up when I came back to it. This suited the style of the project well as it was done bit by bit. The diary helped show that progression clearly and also made it easier to reflect on design decisions when writing my report.
+As mentioned throughout the report, I kept a weekly diary to track progress and note what the next step would be after each development session. This suited the project well because the implementation was built incrementally instead of all at once. The diary helped me break the work into smaller stages, such as grid creation, class design, heuristic selection, path reconstruction, and testing. It also provided a useful record of how the project developed over time and supported the continuous development aspect required by the brief.
 
 Although this section is shorter than requested, I hope the progress through is each feature is represented clearly section.
 
 ## Limitations and Possible Improvements
 
-Although the final implementation works well for a standard grid-based A* search, it is still a relatively simple version of the algorithm. During the project I also researched more advanced pathfinding ideas, including hierarchical A* and clearance-based pathfinding for different sized agents. These approaches would make the project more capable and more realistic in larger or more complex environments. Hierarchical A* can improve efficiency by planning at different levels of abstraction, while clearance-based pathfinding allows the same map to support agents of different sizes rather than assuming every agent occupies a single grid cell. Because of time constraints, these ideas were not implemented in the final version. If I had more time, the next step would be to extend the project in one of these directions so that it moved beyond a basic single-agent, single-grid-cell A* implementation.
+The current implementation works well for a standard grid-based A* search, but there are some honest limitations worth acknowledging.
+
+One small fragility is the bestGCost table being initialised to 99999 as a stand-in for infinity. This works fine for the grid sizes used in testing, but on a large enough grid with enough movement cost it could theoretically cause problems. A cleaner solution would be to use `std::numeric_limits<int>::max()`.
+
+The algorithm also assumes every walkable cell costs the same to enter. Adding weighted terrain would actually be a relatively small change — the Node cost calculation would just need to read a movement cost from the grid cell rather than always adding 1. This feels like the most natural first extension to the project.
+
+Diagonal movement is also not supported. As mentioned in the heuristic section, this would simply mean adding four more coordinate pairs to the Directions array and switching from Manhattan to Euclidean distance. It is a small change in code but a meaningful one in terms of the paths the algorithm can find.
+
+Beyond those, I also researched more advanced ideas including hierarchical A* and clearance-based pathfinding. Hierarchical A* works by dividing the grid into sectors and planning at two levels. First finding a route between sectors, then refining within them. In practice this would mean a second, coarser grid sitting alongside the current one. Clearance-based pathfinding would allow agents of different sizes to use the same map, which would require the Node struct to carry a size value and IsWalkable to check a radius rather than a single cell. 
+
+[Hierarchical A* & Clearance-based pathfinding](https://web.archive.org/web/20190411040123/http:/aigamedev.com/open/article/clearance-based-pathfinding/)
+
+If I were to continue the project, the order I would tackle these would be weighted terrain first as it is the most contained change, then diagonal movement, and then clearance-based pathfinding before eventually looking at hierarchical A*.
 
 ## Reflection 
 
@@ -790,7 +809,7 @@ AI assistance was used in a limited and reflective way, mainly to:
 - help identify safer standard-library usage
 - prompt refactoring ideas
 
-Examples include the move from index-based loops to range-based loops, the suggestion to use std::ssize, and the decision to group A* tables into a dedicated struct. However, these suggestions were not copied blindly. They were either adapted into the design or simply unused where they did not fit, such as the early idea of helper functions in AStar for node creation.
+Examples include the move from index-based loops to range-based loops, the suggestion to use [[nodiscard]] in header files to mark return values that should not be ignored, and the decision to group A* tables into a dedicated struct. However, these suggestions were not copied blindly. They were either adapted into the design or simply unused where they did not fit, such as the early idea of helper functions in AStar for node creation.
 
 I also used AI to generate a comprehensive test file for the AStar algorithm that is named `AStarTestsAI`, to differentiate between my own and AI work. 
 
